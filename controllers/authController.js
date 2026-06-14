@@ -20,9 +20,13 @@ const registerUser = async (req, res) => {
     email,
     password: hashedPassword,
     role,
+    profileCompleted: false,
   });
 
-  res.json(user);
+  res.status(201).json({
+    message: "User registered successfully",
+    user,
+  });
 };
 
 // LOGIN
@@ -30,7 +34,6 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // check email
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -39,8 +42,10 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isMatch) {
       return res.status(400).json({
@@ -48,7 +53,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // success response
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -56,6 +60,16 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileImage: user.profileImage,
+        age: user.age,
+        phone: user.phone,
+        address: user.address,
+        emergencyContact:
+          user.emergencyContact,
+        medicalConditions:
+          user.medicalConditions,
+        profileCompleted:
+          user.profileCompleted,
       },
     });
   } catch (error) {
@@ -65,4 +79,39 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+// UPDATE PROFILE
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        profileCompleted: true,
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  updateProfile,
+};
