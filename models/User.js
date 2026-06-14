@@ -5,52 +5,33 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
   email: {
     type: String,
     required: true,
     unique: true,
   },
-
   password: {
     type: String,
     required: true,
   },
-
   role: {
     type: String,
     enum: ["admin", "user"],
     default: "user",
   },
-
-  profileImage: {
-    type: String,
-    default: "",
-  },
-
-  age: {
-    type: Number,
-  },
-
-  phone: {
-    type: String,
-  },
-
-  address: {
-    type: String,
-  },
-
-  emergencyContact: {
-    type: String,
-  },
-
-  medicalConditions: {
-    type: String,
-  },
-
   profileCompleted: {
     type: Boolean,
     default: false,
+  },
+  profileImage: String,
+  age: Number,
+  phone: String,
+  address: String,
+  emergencyContact: String,
+  medicalConditions: String,
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
