@@ -63,6 +63,42 @@ node server.js
 | GET    | /api/auth/me       | Get current user     | Yes  |
 | PUT    | /api/auth/profile  | Update user profile  | Yes  |
 
+### Appointments
+
+| Method | Endpoint                 | Description             | Auth |
+|--------|--------------------------|-------------------------|------|
+| POST   | /api/appointments        | Create appointment      | Yes  |
+| GET    | /api/appointments        | Get all appointments    | Yes  |
+| PUT    | /api/appointments/:id    | Update appointment      | Yes  |
+| DELETE | /api/appointments/:id    | Delete appointment      | Yes  |
+
+### Emergency Contacts
+
+| Method | Endpoint                       | Description              | Auth |
+|--------|--------------------------------|--------------------------|------|
+| POST   | /api/emergency-contacts        | Add emergency contact    | Yes  |
+| GET    | /api/emergency-contacts        | Get all contacts         | Yes  |
+| PUT    | /api/emergency-contacts/:id    | Update contact           | Yes  |
+| DELETE | /api/emergency-contacts/:id    | Delete contact           | Yes  |
+
+### Medical Conditions
+
+| Method | Endpoint                        | Description               | Auth |
+|--------|---------------------------------|---------------------------|------|
+| POST   | /api/medical-conditions         | Add medical condition     | Yes  |
+| GET    | /api/medical-conditions         | Get all conditions        | Yes  |
+| PUT    | /api/medical-conditions/:id     | Update condition          | Yes  |
+| DELETE | /api/medical-conditions/:id     | Delete condition          | Yes  |
+
+### Medications
+
+| Method | Endpoint                 | Description             | Auth |
+|--------|--------------------------|-------------------------|------|
+| POST   | /api/medications         | Add medication          | Yes  |
+| GET    | /api/medications         | Get all medications     | Yes  |
+| PUT    | /api/medications/:id     | Update medication       | Yes  |
+| DELETE | /api/medications/:id     | Delete medication       | Yes  |
+
 ## Project Structure
 
 ```
