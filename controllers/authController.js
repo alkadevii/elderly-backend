@@ -131,7 +131,7 @@ const getCurrentUser = async (req, res) => {
 // UPDATE PROFILE
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.id;
     const updateData = {
       ...req.body,
       profileCompleted: true,

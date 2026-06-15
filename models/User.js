@@ -5,34 +5,42 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
   email: {
     type: String,
     required: true,
     unique: true,
   },
+
   password: {
     type: String,
     required: true,
   },
+
   role: {
     type: String,
     enum: ["admin", "user"],
     default: "user",
   },
+
   profileCompleted: {
     type: Boolean,
     default: false,
   },
+
   profileImage: String,
+
   age: Number,
+
   phone: String,
+
   address: String,
-  emergencyContact: String,
-  medicalConditions: String,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+
+}, {
+  timestamps: true,
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model(
+  "User",
+  userSchema
+);

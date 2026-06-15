@@ -13,9 +13,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-// Protected route - requires JWT token
 router.get("/me", authMiddleware, getCurrentUser);
 
-router.put("/profile/:id", updateProfile);
+router.put("/profile",authMiddleware, updateProfile);
 
 module.exports = router;
