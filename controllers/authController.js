@@ -130,7 +130,7 @@ const getCurrentUser = async (req, res) => {
 
 // UPDATE PROFILE
 const updateProfile = async (req, res) => {
-  try {
+  try { 
     const userId = req.user.id;
     const updateData = {
       ...req.body,
