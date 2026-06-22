@@ -9,10 +9,11 @@ const {
 } = require("../controllers/medicalConditionController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+const { requireVerified } = authMiddleware;
 
-router.post("/", authMiddleware, addCondition);
-router.get("/", authMiddleware, getConditions);
-router.put("/:id", authMiddleware, updateCondition);
-router.delete("/:id", authMiddleware, deleteCondition);
+router.post("/", authMiddleware, requireVerified, addCondition);
+router.get("/", authMiddleware, requireVerified, getConditions);
+router.put("/:id", authMiddleware, requireVerified, updateCondition);
+router.delete("/:id", authMiddleware, requireVerified, deleteCondition);
 
 module.exports = router;

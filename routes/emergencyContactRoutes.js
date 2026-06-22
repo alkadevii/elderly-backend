@@ -9,10 +9,11 @@ const {
 } = require("../controllers/emergencyContactController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+const { requireVerified } = authMiddleware;
 
-router.post("/", authMiddleware, addContact);
-router.get("/", authMiddleware, getContacts);
-router.put("/:id", authMiddleware, updateContact);
-router.delete("/:id", authMiddleware, deleteContact);
+router.post("/", authMiddleware, requireVerified, addContact);
+router.get("/", authMiddleware, requireVerified, getContacts);
+router.put("/:id", authMiddleware, requireVerified, updateContact);
+router.delete("/:id", authMiddleware, requireVerified, deleteContact);
 
 module.exports = router;

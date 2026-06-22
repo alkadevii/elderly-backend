@@ -1,114 +1,116 @@
-const Medication = require(
-  "../models/Medication"
-);
+const Medication = require("../models/Medication");
+const { getStaffUserFilter } = require("../utils/staffAccess");
 
-const addMedication = async (
-  req,
-  res
-) => {
+const addMedication = async (req, res) => {
   try {
-    const medication =
-      await Medication.create({
-        user: req.user.id,
-        ...req.body,
-      });
+    const userId = req.user.role === "staff" ? req.body.userId : req.user.id;
+
+    if (req.user.role === "staff") {
+      const filter = await getStaffUserFilter(req.user.id, userId);
+      if (!filter) {
+        return res.status(403).json({ message: "You are not assigned to this user" });
+      }
+    }
+
+    const medication = await Medication.create({
+      user: userId,
+      ...req.body,
+    });
 
     res.status(201).json({
-      message:
-        "Medication added successfully",
+      message: "Medication added successfully",
       medication,
     });
   } catch (error) {
     res.status(500).json({
-      message:
-        "Failed to add medication",
+      message: "Failed to add medication",
       error: error.message,
     });
   }
 };
 
-const getMedications =
-  async (req, res) => {
-    try {
-      const medications =
-        await Medication.find({
-          user: req.user.id,
-        });
+const getMedications = async (req, res) => {
+  try {
+    let filter;
 
-      res.status(200).json(
-        medications
-      );
-    } catch (error) {
-      res.status(500).json({
-        message:
-          "Failed to fetch medications",
-        error: error.message,
-      });
-    }
-  };
-
-const updateMedication =
-  async (req, res) => {
-    try {
-      const medication =
-        await Medication.findOneAndUpdate(
-          {
-            _id: req.params.id,
-            user: req.user.id,
-          },
-          req.body,
-          { new: true }
-        );
-
-      if (!medication) {
-        return res.status(404).json({
-          message:
-            "Medication not found",
-        });
+    if (req.user.role === "staff") {
+      filter = await getStaffUserFilter(req.user.id, req.query.userId);
+      if (!filter) {
+        return res.status(403).json({ message: "You are not assigned to this user" });
       }
-
-      res.status(200).json(
-        medication
-      );
-    } catch (error) {
-      res.status(500).json({
-        message:
-          "Failed to update medication",
-        error: error.message,
-      });
+    } else {
+      filter = { user: req.user.id };
     }
-  };
 
-const deleteMedication =
-  async (req, res) => {
-    try {
-      const medication =
-        await Medication.findOneAndDelete(
-          {
-            _id: req.params.id,
-            user: req.user.id,
-          }
-        );
+    const medications = await Medication.find(filter);
+    res.status(200).json(medications);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch medications",
+      error: error.message,
+    });
+  }
+};
 
-      if (!medication) {
-        return res.status(404).json({
-          message:
-            "Medication not found",
-        });
+const updateMedication = async (req, res) => {
+  try {
+    let filter;
+
+    if (req.user.role === "staff") {
+      const staffFilter = await getStaffUserFilter(req.user.id, null);
+      if (!staffFilter || !staffFilter.user) {
+        return res.status(403).json({ message: "You have no assigned users" });
       }
-
-      res.status(200).json({
-        message:
-          "Medication deleted successfully",
-      });
-    } catch (error) {
-      res.status(500).json({
-        message:
-          "Failed to delete medication",
-        error: error.message,
-      });
+      filter = { _id: req.params.id, ...staffFilter };
+    } else {
+      filter = { _id: req.params.id, user: req.user.id };
     }
-  };
+
+    const medication = await Medication.findOneAndUpdate(filter, req.body, {
+      new: true,
+    });
+
+    if (!medication) {
+      return res.status(404).json({ message: "Medication not found" });
+    }
+
+    res.status(200).json(medication);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update medication",
+      error: error.message,
+    });
+  }
+};
+
+const deleteMedication = async (req, res) => {
+  try {
+    let filter;
+
+    if (req.user.role === "staff") {
+      const staffFilter = await getStaffUserFilter(req.user.id, null);
+      if (!staffFilter || !staffFilter.user) {
+        return res.status(403).json({ message: "You have no assigned users" });
+      }
+      filter = { _id: req.params.id, ...staffFilter };
+    } else {
+      filter = { _id: req.params.id, user: req.user.id };
+    }
+
+    const medication = await Medication.findOneAndDelete(filter);
+
+    if (!medication) {
+      return res.status(404).json({ message: "Medication not found" });
+    }
+
+    res.status(200).json({ message: "Medication deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to delete medication",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   addMedication,

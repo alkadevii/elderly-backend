@@ -1,15 +1,21 @@
-const EmergencyContact = require(
-  "../models/EmergencyContact"
-);
+const EmergencyContact = require("../models/EmergencyContact");
+const { getStaffUserFilter } = require("../utils/staffAccess");
 
-// CREATE
 const addContact = async (req, res) => {
   try {
-    const contact =
-      await EmergencyContact.create({
-        user: req.user.id,
-        ...req.body,
-      });
+    const userId = req.user.role === "staff" ? req.body.userId : req.user.id;
+
+    if (req.user.role === "staff") {
+      const filter = await getStaffUserFilter(req.user.id, userId);
+      if (!filter) {
+        return res.status(403).json({ message: "You are not assigned to this user" });
+      }
+    }
+
+    const contact = await EmergencyContact.create({
+      user: userId,
+      ...req.body,
+    });
 
     res.status(201).json({
       message: "Contact added",
@@ -23,87 +29,84 @@ const addContact = async (req, res) => {
   }
 };
 
-// GET ALL
-const getContacts = async (
-  req,
-  res
-) => {
+const getContacts = async (req, res) => {
   try {
-    const contacts =
-      await EmergencyContact.find({
-        user: req.user.id,
-      });
+    let filter;
 
+    if (req.user.role === "staff") {
+      filter = await getStaffUserFilter(req.user.id, req.query.userId);
+      if (!filter) {
+        return res.status(403).json({ message: "You are not assigned to this user" });
+      }
+    } else {
+      filter = { user: req.user.id };
+    }
+
+    const contacts = await EmergencyContact.find(filter);
     res.status(200).json(contacts);
   } catch (error) {
     res.status(500).json({
-      message:
-        "Failed to fetch contacts",
+      message: "Failed to fetch contacts",
       error: error.message,
     });
   }
 };
 
-// UPDATE
-const updateContact = async (
-  req,
-  res
-) => {
+const updateContact = async (req, res) => {
   try {
-    const contact =
-      await EmergencyContact.findOneAndUpdate(
-        {
-          _id: req.params.id,
-          user: req.user.id,
-        },
-        req.body,
-        { new: true }
-      );
+    let filter;
+
+    if (req.user.role === "staff") {
+      const staffFilter = await getStaffUserFilter(req.user.id, null);
+      if (!staffFilter || !staffFilter.user) {
+        return res.status(403).json({ message: "You have no assigned users" });
+      }
+      filter = { _id: req.params.id, ...staffFilter };
+    } else {
+      filter = { _id: req.params.id, user: req.user.id };
+    }
+
+    const contact = await EmergencyContact.findOneAndUpdate(filter, req.body, {
+      new: true,
+    });
 
     if (!contact) {
-      return res.status(404).json({
-        message: "Contact not found",
-      });
+      return res.status(404).json({ message: "Contact not found" });
     }
 
     res.status(200).json(contact);
   } catch (error) {
     res.status(500).json({
-      message:
-        "Failed to update contact",
+      message: "Failed to update contact",
       error: error.message,
     });
   }
 };
 
-// DELETE
-const deleteContact = async (
-  req,
-  res
-) => {
+const deleteContact = async (req, res) => {
   try {
-    const contact =
-      await EmergencyContact.findOneAndDelete(
-        {
-          _id: req.params.id,
-          user: req.user.id,
-        }
-      );
+    let filter;
 
-    if (!contact) {
-      return res.status(404).json({
-        message: "Contact not found",
-      });
+    if (req.user.role === "staff") {
+      const staffFilter = await getStaffUserFilter(req.user.id, null);
+      if (!staffFilter || !staffFilter.user) {
+        return res.status(403).json({ message: "You have no assigned users" });
+      }
+      filter = { _id: req.params.id, ...staffFilter };
+    } else {
+      filter = { _id: req.params.id, user: req.user.id };
     }
 
-    res.status(200).json({
-      message:
-        "Contact deleted successfully",
-    });
+    const contact = await EmergencyContact.findOneAndDelete(filter);
+
+    if (!contact) {
+      return res.status(404).json({ message: "Contact not found" });
+    }
+
+    res.status(200).json({ message: "Contact deleted successfully" });
   } catch (error) {
     res.status(500).json({
-      message:
-        "Failed to delete contact",
+      message: "Failed to delete contact",
       error: error.message,
     });
   }

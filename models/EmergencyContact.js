@@ -13,6 +13,8 @@ const emergencyContactSchema =
     relationship: String,
 
     phone: String,
+
+    email: String,
   });
 
 module.exports = mongoose.model(

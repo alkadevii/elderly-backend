@@ -9,10 +9,11 @@ const {
 } = require("../controllers/medicationController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+const { requireVerified } = authMiddleware;
 
-router.post("/", authMiddleware, addMedication);
-router.get("/", authMiddleware, getMedications);
-router.put("/:id", authMiddleware, updateMedication);
-router.delete("/:id", authMiddleware, deleteMedication);
+router.post("/", authMiddleware, requireVerified, addMedication);
+router.get("/", authMiddleware, requireVerified, getMedications);
+router.put("/:id", authMiddleware, requireVerified, updateMedication);
+router.delete("/:id", authMiddleware, requireVerified, deleteMedication);
 
 module.exports = router;

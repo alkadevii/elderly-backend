@@ -22,6 +22,7 @@ app.use("/api/appointments", require("./routes/appointmentRoutes"));
 app.use("/api/emergency-contacts", require("./routes/emergencyContactRoutes"));
 app.use("/api/medical-conditions", require("./routes/medicalConditionRoutes"));
 app.use("/api/medications", require("./routes/medicationRoutes"));
+app.use("/api/hospitals", require("./routes/hospitalRoutes"));
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
