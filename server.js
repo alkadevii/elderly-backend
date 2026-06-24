@@ -19,10 +19,13 @@ app.get("/api/test", (req, res) => {
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/emergency-contacts", require("./routes/emergencyContactRoutes"));
 app.use("/api/medical-conditions", require("./routes/medicalConditionRoutes"));
 app.use("/api/medications", require("./routes/medicationRoutes"));
+app.use("/api/vitals", require("./routes/vitalRoutes"));
 app.use("/api/hospitals", require("./routes/hospitalRoutes"));
+app.use("/api/export", require("./routes/exportRoutes"));
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);

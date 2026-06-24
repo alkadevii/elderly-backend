@@ -22,9 +22,11 @@ const appointmentSchema =
         "pending",
         "pending_confirmation",
         "user_confirmed",
-        "approved",
         "scheduled",
+        "awaiting_feedback",
+        "feedback_provided",
         "completed",
+        "cancellation_requested",
         "cancelled",
         "rejected"
       ],
@@ -61,6 +63,29 @@ const appointmentSchema =
     },
 
     finalizedAt: Date,
+
+    feedbackNotes: String,
+
+    feedbackProvidedAt: Date,
+
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    completedAt: Date,
+
+    cancelledBy: {
+      type: String,
+      enum: ["user", "staff", "admin"],
+      default: null,
+    },
+
+    previousStatus: {
+      type: String,
+      default: null,
+    },
 
   }, {
     timestamps: true,

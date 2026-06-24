@@ -12,6 +12,14 @@ const addMedication = async (req, res) => {
       }
     }
 
+    const { scheduleTimes } = req.body;
+
+    if (!scheduleTimes || !Array.isArray(scheduleTimes) || scheduleTimes.length === 0) {
+      return res.status(400).json({
+        message: "At least one schedule time is required (e.g. ['08:00', '20:00'])",
+      });
+    }
+
     const medication = await Medication.create({
       user: userId,
       ...req.body,
@@ -83,8 +91,7 @@ const updateMedication = async (req, res) => {
   }
 };
 
-const deleteMedication = async (req, res) => {
-  try {
+const deleteMedication = async (req, res) => {  try {
     let filter;
 
     if (req.user.role === "staff") {
