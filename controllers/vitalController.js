@@ -2,6 +2,7 @@ const Vital = require("../models/Vital");
 const { VITAL_TYPES } = require("../models/Vital");
 const { getStaffUserFilter } = require("../utils/staffAccess");
 const { evaluateVital, getVitalRanges, VITAL_RANGES } = require("../utils/vitalRanges");
+const { logAudit } = require("../utils/auditLog");
 
 const DEFAULT_UNITS = {
   blood_pressure: "mmHg",
@@ -62,6 +63,17 @@ const addVital = async (req, res) => {
     });
 
     const assessment = evaluateVital(type, vital.value, vital.secondaryValue);
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "vital.created",
+      targetModel: "Vital",
+      targetId: vital._id,
+      targetUser: targetUserId,
+      details: { type, value, unit: unit || DEFAULT_UNITS[type] || "" },
+      req,
+    });
 
     res.status(201).json({
       message: "Vital recorded successfully",

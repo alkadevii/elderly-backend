@@ -26,6 +26,11 @@ app.use("/api/medications", require("./routes/medicationRoutes"));
 app.use("/api/vitals", require("./routes/vitalRoutes"));
 app.use("/api/hospitals", require("./routes/hospitalRoutes"));
 app.use("/api/export", require("./routes/exportRoutes"));
+app.use("/api/medication-logs", require("./routes/medicationLogRoutes"));
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/audit-logs", require("./routes/auditRoutes"));
+app.use("/api/staff", require("./routes/staffRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);

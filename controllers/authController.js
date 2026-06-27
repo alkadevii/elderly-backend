@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { generateToken } = require("../utils/jwtUtils");
+const { logAudit } = require("../utils/auditLog");
 
 const registerUser = async (req, res) => {
   try {
@@ -23,6 +24,16 @@ const registerUser = async (req, res) => {
       role: role || "user",
       profileCompleted: false,
       verificationStatus: "pending",
+    });
+
+    await logAudit({
+      actor: user._id,
+      actorRole: user.role,
+      action: "user.registered",
+      targetModel: "User",
+      targetId: user._id,
+      details: { email: user.email, role: user.role },
+      req,
     });
 
     res.status(201).json({
@@ -65,6 +76,16 @@ const loginUser = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
+
+    await logAudit({
+      actor: user._id,
+      actorRole: user.role,
+      action: "user.login",
+      targetModel: "User",
+      targetId: user._id,
+      details: { email: user.email },
+      req,
+    });
 
     res.status(200).json({
       message: "Login successful",
@@ -145,6 +166,16 @@ const updateProfile = async (req, res) => {
       });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "user.profile_updated",
+      targetModel: "User",
+      targetId: req.user.id,
+      details: { fieldsUpdated: Object.keys(req.body) },
+      req,
+    });
+
     res.status(200).json({
       message: "Profile updated successfully",
       user,
@@ -175,6 +206,16 @@ const createStaff = async (req, res) => {
       role: "staff",
       profileCompleted: true,
       verificationStatus: "verified",
+    });
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "staff.created",
+      targetModel: "User",
+      targetId: staff._id,
+      details: { email: staff.email, name: staff.name },
+      req,
     });
 
     res.status(201).json({
@@ -218,6 +259,17 @@ const verifyProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: status === "verified" ? "user.verified" : "user.rejected",
+      targetModel: "User",
+      targetId: req.params.userId,
+      targetUser: req.params.userId,
+      details: { status, verificationNotes: req.body.verificationNotes || "" },
+      req,
+    });
+
     res.status(200).json({
       message: `Profile ${status}`,
       user,
@@ -250,6 +302,17 @@ const assignStaff = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "staff.assigned",
+      targetModel: "User",
+      targetId: req.params.userId,
+      targetUser: req.params.userId,
+      details: { staffId: req.body.staffId },
+      req,
+    });
 
     res.status(200).json({
       message: "Staff assigned successfully",

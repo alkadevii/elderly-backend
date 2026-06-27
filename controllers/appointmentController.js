@@ -1,6 +1,7 @@
 const Appointment = require("../models/Appointment");
 const { getStaffUserFilter } = require("../utils/staffAccess");
 const { createNotification } = require("./notificationController");
+const { logAudit } = require("../utils/auditLog");
 const recipientId = (ref) => (ref && (ref._id || ref)) || null;
 
 const validateFutureDate = (appointmentDate) => {
@@ -51,6 +52,16 @@ const createAppointment = async (req, res) => {
       status: isStaff ? "pending_confirmation" : "pending",
       ...(isStaff ? { proposedBy: req.user.id } : {}),
       ...rest,
+    });
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.created",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { doctorName: req.body.doctorName, appointmentDate: req.body.appointmentDate, status: appointment.status },
+      req,
     });
 
     res.status(201).json({
@@ -173,6 +184,16 @@ const updateAppointment = async (req, res) => {
       });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.updated",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { changes: Object.keys(req.body) },
+      req,
+    });
+
     res.status(200).json(appointment);
   } catch (error) {
     res.status(500).json({
@@ -207,6 +228,16 @@ const deleteAppointment = async (req, res) => {
         message: "Appointment not found",
       });
     }
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.deleted",
+      targetModel: "Appointment",
+      targetId: req.params.id,
+      details: { deletedAppointment: appointment.doctorName || "" },
+      req,
+    });
 
     res.status(200).json({
       message: "Appointment deleted successfully",
@@ -302,6 +333,16 @@ const reviewAppointment = async (req, res) => {
       status,
     });
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.reviewed",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { status, reviewNotes: req.body.reviewNotes || "" },
+      req,
+    });
+
     res.status(200).json({
       message:
         status === "scheduled"
@@ -373,6 +414,16 @@ const confirmAppointment = async (req, res) => {
         status: newStatus,
       });
     }
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: newStatus === "user_confirmed" ? "appointment.confirmed" : "appointment.declined",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { status: newStatus, confirmationNotes: req.body.confirmationNotes || "" },
+      req,
+    });
 
     res.status(200).json({
       message:
@@ -453,6 +504,16 @@ const finalizeAppointment = async (req, res) => {  try {
       status: "scheduled",
     });
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.finalized",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { tokenNumber: req.body.tokenNumber, appointmentDate: req.body.appointmentDate },
+      req,
+    });
+
     res.status(200).json({
       message: "Appointment finalized and scheduled",
       appointment,
@@ -515,6 +576,16 @@ const provideFeedback = async (req, res) => {
       });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.feedback",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { feedbackLength: (req.body.feedbackNotes || "").length },
+      req,
+    });
+
     res.status(200).json({
       message: "Feedback submitted successfully. Staff can now close the appointment.",
       appointment,
@@ -568,6 +639,16 @@ const closeAppointment = async (req, res) => {
       message: `Your appointment with ${appointment.doctorName || "your doctor"} has been closed. Thank you for your feedback.`,
       appointment: appointment._id,
       status: "completed",
+    });
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.closed",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { closedBy: req.user.role },
+      req,
     });
 
     res.status(200).json({
@@ -628,6 +709,16 @@ const cancelAppointment = async (req, res) => {
       });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.cancellation_requested",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { previousStatus: appointment.previousStatus },
+      req,
+    });
+
     res.status(200).json({
       message: "Cancellation request submitted. Awaiting staff approval.",
       appointment,
@@ -681,6 +772,16 @@ const approveCancellationRequest = async (req, res) => {
       status: "cancelled",
     });
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.cancellation_approved",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { approvedBy: req.user.role },
+      req,
+    });
+
     res.status(200).json({
       message: "Cancellation approved. Appointment cancelled.",
       appointment,
@@ -731,6 +832,16 @@ const rejectCancellationRequest = async (req, res) => {
       message: `Your request to cancel the appointment with ${appointment.doctorName || "your doctor"} on ${new Date(appointment.appointmentDate).toLocaleDateString()} was not approved. Please contact your staff for details.`,
       appointment: appointment._id,
       status: restoredStatus,
+    });
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "appointment.cancellation_rejected",
+      targetModel: "Appointment",
+      targetId: appointment._id,
+      details: { restoredStatus: appointment.status },
+      req,
     });
 
     res.status(200).json({

@@ -30,6 +30,12 @@ const notificationSchema = new mongoose.Schema(
       default: null,
     },
 
+    medication: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Medication",
+      default: null,
+    },
+
     status: {
       type: String,
       default: null,

@@ -1,5 +1,6 @@
 const Medication = require("../models/Medication");
 const { getStaffUserFilter } = require("../utils/staffAccess");
+const { logAudit } = require("../utils/auditLog");
 
 const addMedication = async (req, res) => {
   try {
@@ -23,6 +24,16 @@ const addMedication = async (req, res) => {
     const medication = await Medication.create({
       user: userId,
       ...req.body,
+    });
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "medication.created",
+      targetModel: "Medication",
+      targetId: medication._id,
+      details: { medicationName: req.body.medicationName, dosage: req.body.dosage },
+      req,
     });
 
     res.status(201).json({
@@ -82,6 +93,16 @@ const updateMedication = async (req, res) => {
       return res.status(404).json({ message: "Medication not found" });
     }
 
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "medication.updated",
+      targetModel: "Medication",
+      targetId: medication._id,
+      details: { changes: Object.keys(req.body) },
+      req,
+    });
+
     res.status(200).json(medication);
   } catch (error) {
     res.status(500).json({
@@ -109,6 +130,16 @@ const deleteMedication = async (req, res) => {  try {
     if (!medication) {
       return res.status(404).json({ message: "Medication not found" });
     }
+
+    await logAudit({
+      actor: req.user.id,
+      actorRole: req.user.role,
+      action: "medication.deleted",
+      targetModel: "Medication",
+      targetId: req.params.id,
+      details: { deletedMedication: medication.medicationName || "" },
+      req,
+    });
 
     res.status(200).json({ message: "Medication deleted successfully" });
   } catch (error) {
