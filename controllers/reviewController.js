@@ -42,7 +42,7 @@ const createReview = async (req, res) => {
       user: user.assignedStaff,
       type: "staff_review",
       title: "New feedback received",
-      message: `${user.name} has submitted a ${rating}-star review for you.`,
+      message: `A patient has submitted a ${rating}-star review for you.`,
       status: "review_submitted",
     });
 
@@ -84,13 +84,29 @@ const getReviews = async (req, res) => {
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
 
-    const reviews = await StaffReview.find(filter)
-      .populate("user", "name email")
+    const populateUserOpts =
+      req.user.role === "staff" ? null : { path: "user", select: "name email" };
+
+    const query = StaffReview.find(filter)
       .populate("staff", "name email")
       .sort({ createdAt: -1 })
       .limit(limit);
 
-    res.status(200).json(reviews);
+    if (populateUserOpts) {
+      query.populate(populateUserOpts);
+    }
+
+    const reviews = await query;
+
+    const result = reviews.map((r) => {
+      const obj = r.toObject();
+      if (req.user.role === "staff") {
+        obj.user = { _id: r.user?._id, name: "Anonymous" };
+      }
+      return obj;
+    });
+
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch reviews", error: error.message });
   }
@@ -112,7 +128,16 @@ const getStaffRating = async (req, res) => {
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
-    const ratings = reviews.map((r) => r.rating);
+    const anonymized =
+      req.user.role === "staff"
+        ? reviews.map((r) => {
+            const obj = r.toObject();
+            obj.user = { _id: r.user?._id, name: "Anonymous" };
+            return obj;
+          })
+        : reviews;
+
+    const ratings = anonymized.map((r) => r.rating);
     const avg = ratings.length > 0
       ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
       : 0;
@@ -124,10 +149,10 @@ const getStaffRating = async (req, res) => {
 
     res.status(200).json({
       staffId,
-      totalReviews: reviews.length,
+      totalReviews: anonymized.length,
       averageRating: avg,
       breakdown,
-      reviews,
+      reviews: anonymized,
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch rating", error: error.message });
